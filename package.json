@@ -9,9 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@s8fy/pptx-converter": "^1.0.0",
+    "groq-sdk": "^1.6.0",
+    "mammoth": "^1.12.2",
     "next": "16.3.4",
+    "openai": "^7.9.0",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

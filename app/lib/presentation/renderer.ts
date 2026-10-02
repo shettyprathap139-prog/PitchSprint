@@ -15,9 +15,20 @@ type RendererOptions = {
   theme: PresentationTheme;
 };
 
-/* =========================================
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const SW = 13.333;
+const SH = 7.5;
+
+const MARGIN_X = 0.7;
+const CONTENT_TOP = 1.45;
+const CONTENT_BOTTOM = 6.55;
+
+/* =========================================================
    MAIN RENDERER
-========================================= */
+========================================================= */
 
 export function renderPresentation(
   data: PresentationData,
@@ -71,73 +82,71 @@ export function renderPresentation(
         renderContent(slide, slideData, theme);
     }
 
-    /*
-     * Every slide receives the same footer system.
-     */
-    addFooter(
-      slide,
-      theme,
-      index,
-      data.slides.length
-    );
+    addFooter(slide, theme, index, data.slides.length);
   });
 
   return pptx;
 }
 
-/* =========================================
-   GLOBAL THEME
-========================================= */
+/* =========================================================
+   THEME
+========================================================= */
 
 function applyBaseTheme(
   slide: PptxSlide,
   theme: PresentationTheme
 ) {
-  /*
-   * THIS IS THE MOST IMPORTANT LINE.
-   *
-   * Every slide gets the exact same theme
-   * background before its layout is rendered.
-   */
   slide.background = {
     color: theme.colors.background,
   };
 }
 
-/* =========================================
-   COMMON HEADER
-========================================= */
+/* =========================================================
+   HEADER
+========================================================= */
 
 function addHeader(
   slide: PptxSlide,
   theme: PresentationTheme,
-  title: string
+  title: string,
+  eyebrow?: string
 ) {
-  slide.addText(title, {
-    x: 0.7,
-    y: 0.42,
-    w: 8.8,
-    h: 0.5,
+  if (eyebrow) {
+    slide.addText(eyebrow.toUpperCase(), {
+      x: MARGIN_X,
+      y: 0.35,
+      w: 4,
+      h: 0.2,
+      fontFace: theme.fonts.body,
+      fontSize: 7,
+      bold: true,
+      color: theme.colors.primary,
+      charSpacing: 1.5,
+      margin: 0,
+    });
+  }
 
+  slide.addText(title, {
+    x: MARGIN_X,
+    y: 0.58,
+    w: 9.5,
+    h: 0.55,
     fontFace: theme.fonts.heading,
     fontSize: theme.sizes.sectionTitle,
     bold: true,
-
     color: theme.colors.text,
-
     margin: 0,
+    fit: "shrink",
   });
 
-  slide.addShape("rect", {
-    x: 0.7,
-    y: 1.05,
-    w: 0.65,
-    h: 0.04,
-
+  slide.addShape(pptxgen.ShapeType.rect, {
+    x: MARGIN_X,
+    y: 1.18,
+    w: 0.75,
+    h: 0.045,
     fill: {
       color: theme.colors.primary,
     },
-
     line: {
       color: theme.colors.primary,
       transparency: 100,
@@ -145,27 +154,23 @@ function addHeader(
   });
 
   slide.addText("PITCHSPRINT", {
-    x: 10.5,
-    y: 0.45,
-    w: 2.2,
+    x: 10.35,
+    y: 0.48,
+    w: 2.25,
     h: 0.2,
-
     fontFace: theme.fonts.body,
-    fontSize: theme.sizes.small,
+    fontSize: 7,
     bold: true,
-
     color: theme.colors.muted,
-
     align: "right",
     margin: 0,
-
-    charSpacing: 1.2,
+    charSpacing: 1.5,
   });
 }
 
-/* =========================================
-   COMMON FOOTER
-========================================= */
+/* =========================================================
+   FOOTER
+========================================================= */
 
 function addFooter(
   slide: PptxSlide,
@@ -177,16 +182,13 @@ function addFooter(
     x: 0.7,
     y: 7.02,
     w: 2,
-    h: 0.18,
-
+    h: 0.16,
     fontFace: theme.fonts.body,
-    fontSize: 7,
+    fontSize: 6.5,
     bold: true,
-
     color: theme.colors.muted,
-
+    charSpacing: 1.2,
     margin: 0,
-    charSpacing: 1,
   });
 
   slide.addText(
@@ -196,23 +198,36 @@ function addFooter(
     {
       x: 11.1,
       y: 7.02,
-      w: 1.4,
-      h: 0.18,
-
+      w: 1.5,
+      h: 0.16,
       fontFace: theme.fonts.body,
-      fontSize: 7,
-
+      fontSize: 6.5,
       color: theme.colors.muted,
-
       align: "right",
       margin: 0,
     }
   );
 }
 
-/* =========================================
-   GLOBAL CARD
-========================================= */
+/* =========================================================
+   DATA HELPERS
+========================================================= */
+
+function getItems(slide: PresentationSlide): SlideItem[] {
+  return Array.isArray(slide.items) ? slide.items : [];
+}
+
+function itemTitle(item?: SlideItem) {
+  return item?.title || item?.label || "";
+}
+
+function itemText(item?: SlideItem) {
+  return item?.text || "";
+}
+
+/* =========================================================
+   CARD
+========================================================= */
 
 function addCard(
   slide: PptxSlide,
@@ -220,38 +235,44 @@ function addCard(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
+  accent = false
 ) {
-  /*
-   * Every card uses the same:
-   *
-   * background
-   * border
-   * border width
-   *
-   * regardless of the slide layout.
-   */
-
-  slide.addShape("roundRect", {
+  slide.addShape(pptxgen.ShapeType.roundRect, {
     x,
     y,
     w,
     h,
-
+    rectRadius: theme.style.radius,
     fill: {
       color: theme.colors.surface,
     },
-
     line: {
-      color: theme.colors.border,
-      width: theme.style.borderWidth,
+      color: accent
+        ? theme.colors.primary
+        : theme.colors.border,
+      width: accent
+        ? Math.max(theme.style.borderWidth, 1.2)
+        : theme.style.borderWidth,
     },
   });
-}
 
-/* =========================================
-   CARD TITLE
-========================================= */
+  if (accent) {
+    slide.addShape(pptxgen.ShapeType.rect, {
+      x,
+      y,
+      w: 0.045,
+      h,
+      fill: {
+        color: theme.colors.primary,
+      },
+      line: {
+        color: theme.colors.primary,
+        transparency: 100,
+      },
+    });
+  }
+}
 
 function addCardTitle(
   slide: PptxSlide,
@@ -259,29 +280,22 @@ function addCardTitle(
   title: string,
   x: number,
   y: number,
-  w: number
+  w: number,
+  size = 15
 ) {
   slide.addText(title, {
     x,
     y,
     w,
-    h: 0.4,
-
+    h: 0.42,
     fontFace: theme.fonts.heading,
-    fontSize: 15,
+    fontSize: size,
     bold: true,
-
     color: theme.colors.text,
-
     margin: 0,
-
     fit: "shrink",
   });
 }
-
-/* =========================================
-   CARD TEXT
-========================================= */
 
 function addCardText(
   slide: PptxSlide,
@@ -290,42 +304,49 @@ function addCardText(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
+  size = 12
 ) {
   slide.addText(text, {
     x,
     y,
     w,
     h,
-
     fontFace: theme.fonts.body,
-    fontSize: theme.sizes.body,
-
+    fontSize: size,
     color: theme.colors.muted,
-
     margin: 0,
-
     valign: "top",
-
     fit: "shrink",
+    breakLine: false,
   });
 }
 
-/* =========================================
-   ITEMS
-========================================= */
-
-function getItems(
-  slide: PresentationSlide
-): SlideItem[] {
-  return Array.isArray(slide.items)
-    ? slide.items
-    : [];
+function addAccentDot(
+  slide: PptxSlide,
+  theme: PresentationTheme,
+  x: number,
+  y: number,
+  size = 0.3
+) {
+  slide.addShape(pptxgen.ShapeType.ellipse, {
+    x,
+    y,
+    w: size,
+    h: size,
+    fill: {
+      color: theme.colors.primary,
+    },
+    line: {
+      color: theme.colors.primary,
+      transparency: 100,
+    },
+  });
 }
 
-/* =========================================
-   TITLE SLIDE
-========================================= */
+/* =========================================================
+   TITLE
+========================================================= */
 
 function renderTitle(
   slide: PptxSlide,
@@ -334,48 +355,38 @@ function renderTitle(
 ) {
   slide.addText("PITCHSPRINT", {
     x: 0.7,
-    y: 0.55,
-    w: 2.4,
-    h: 0.25,
-
+    y: 0.52,
+    w: 2.5,
+    h: 0.2,
     fontFace: theme.fonts.body,
-    fontSize: 9,
+    fontSize: 8,
     bold: true,
-
     color: theme.colors.muted,
-
-    margin: 0,
-
     charSpacing: 1.8,
+    margin: 0,
   });
 
   slide.addText(slideData.title, {
     x: 0.85,
-    y: 2.35,
-    w: 8.7,
-    h: 1.3,
-
+    y: 2.18,
+    w: 8.4,
+    h: 1.25,
     fontFace: theme.fonts.heading,
-    fontSize: theme.sizes.title + 8,
+    fontSize: Math.max(theme.sizes.title + 8, 36),
     bold: true,
-
     color: theme.colors.text,
-
     margin: 0,
-
     fit: "shrink",
   });
 
-  slide.addShape("rect", {
+  slide.addShape(pptxgen.ShapeType.rect, {
     x: 0.85,
-    y: 3.8,
+    y: 3.62,
     w: 0.75,
-    h: 0.05,
-
+    h: 0.06,
     fill: {
       color: theme.colors.primary,
     },
-
     line: {
       color: theme.colors.primary,
       transparency: 100,
@@ -385,213 +396,140 @@ function renderTitle(
   if (slideData.subtitle) {
     slide.addText(slideData.subtitle, {
       x: 0.85,
-      y: 4.08,
-      w: 7.5,
+      y: 3.98,
+      w: 7.8,
       h: 0.75,
-
       fontFace: theme.fonts.body,
-      fontSize: theme.sizes.body + 1,
-
+      fontSize: 17,
       color: theme.colors.muted,
-
       margin: 0,
-
       fit: "shrink",
     });
   }
 
-  /*
-   * Decorative element also uses the selected
-   * theme colors.
-   */
-
-  slide.addShape("ellipse", {
-    x: 9.25,
-    y: 4.15,
-    w: 3.2,
-    h: 3.2,
-
+  // Premium decorative circle
+  slide.addShape(pptxgen.ShapeType.ellipse, {
+    x: 9.55,
+    y: 4.05,
+    w: 3.15,
+    h: 3.15,
     fill: {
       color: theme.colors.primarySoft,
-      transparency: 55,
+      transparency: 35,
     },
-
     line: {
       color: theme.colors.primary,
-      transparency: 72,
-      width: 1,
+      transparency: 65,
+      width: 1.2,
+    },
+  });
+
+  slide.addShape(pptxgen.ShapeType.ellipse, {
+    x: 10.15,
+    y: 4.65,
+    w: 1.95,
+    h: 1.95,
+    fill: {
+      color: theme.colors.primary,
+      transparency: 88,
+    },
+    line: {
+      color: theme.colors.primary,
+      transparency: 100,
     },
   });
 }
 
-/* =========================================
+/* =========================================================
    CONTENT
-========================================= */
+========================================================= */
 
 function renderContent(
   slide: PptxSlide,
   slideData: PresentationSlide,
   theme: PresentationTheme
 ) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
+  addHeader(slide, theme, slideData.title);
 
-  const items = getItems(slideData);
+  const items = getItems(slideData).slice(0, 6);
 
-  if (items.length === 0) {
-    return;
-  }
+  if (!items.length) return;
 
-  const visibleItems = items.slice(0, 6);
+  const columns = items.length <= 3 ? items.length : 2;
+  const rows = Math.ceil(items.length / columns);
 
-  if (visibleItems.length <= 2) {
-    visibleItems.forEach((item, index) => {
-      const y = 1.55 + index * 2.45;
+  const gapX = 0.3;
+  const gapY = 0.3;
 
-      addCard(
-        slide,
-        theme,
-        0.75,
-        y,
-        11.7,
-        2.05
-      );
+  const availableWidth = 11.9;
+  const cardWidth =
+    (availableWidth - gapX * (columns - 1)) / columns;
 
-      if (item.title) {
-        addCardTitle(
-          slide,
-          theme,
-          item.title,
-          1.05,
-          y + 0.35,
-          10.7
-        );
-      }
+  const cardHeight =
+    Math.min(
+      2.05,
+      (5.05 - gapY * (rows - 1)) / rows
+    );
 
-      if (item.text) {
-        addCardText(
-          slide,
-          theme,
-          item.text,
-          1.05,
-          y + 0.88,
-          10.6,
-          0.9
-        );
-      }
-    });
-
-    return;
-  }
-
-  if (visibleItems.length === 3) {
-    visibleItems.forEach((item, index) => {
-      const x = 0.75 + index * 3.9;
-
-      addCard(
-        slide,
-        theme,
-        x,
-        1.65,
-        3.55,
-        4.65
-      );
-
-      if (item.label) {
-        slide.addText(item.label, {
-          x: x + 0.3,
-          y: 1.95,
-          w: 2.8,
-          h: 0.25,
-
-          fontFace: theme.fonts.body,
-          fontSize: theme.sizes.small,
-          bold: true,
-
-          color: theme.colors.primary,
-
-          margin: 0,
-
-          charSpacing: 1,
-        });
-      }
-
-      if (item.title) {
-        addCardTitle(
-          slide,
-          theme,
-          item.title,
-          x + 0.3,
-          2.35,
-          2.9
-        );
-      }
-
-      if (item.text) {
-        addCardText(
-          slide,
-          theme,
-          item.text,
-          x + 0.3,
-          3.05,
-          2.9,
-          2.5
-        );
-      }
-    });
-
-    return;
-  }
-
-  const columns = 2;
-
-  visibleItems.forEach((item, index) => {
-    const column = index % columns;
+  items.forEach((item, index) => {
+    const col = index % columns;
     const row = Math.floor(index / columns);
 
-    const x = 0.75 + column * 5.85;
-    const y = 1.45 + row * 2.45;
+    const x =
+      0.7 + col * (cardWidth + gapX);
+
+    const y =
+      1.55 + row * (cardHeight + gapY);
 
     addCard(
       slide,
       theme,
       x,
       y,
-      5.55,
-      2.2
+      cardWidth,
+      cardHeight,
+      index === 0
     );
 
-    if (item.title) {
+    addAccentDot(
+      slide,
+      theme,
+      x + 0.3,
+      y + 0.28,
+      0.22
+    );
+
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
       addCardTitle(
         slide,
         theme,
-        item.title,
+        title,
         x + 0.3,
-        y + 0.3,
-        4.9
+        y + 0.7,
+        cardWidth - 0.6
       );
     }
 
-    if (item.text) {
+    if (text) {
       addCardText(
         slide,
         theme,
-        item.text,
+        text,
         x + 0.3,
-        y + 0.83,
-        4.9,
-        1.05
+        y + 1.18,
+        cardWidth - 0.6,
+        cardHeight - 1.35
       );
     }
   });
 }
 
-/* =========================================
+/* =========================================================
    TWO COLUMN
-========================================= */
+========================================================= */
 
 function renderTwoColumn(
   slide: PptxSlide,
@@ -602,646 +540,534 @@ function renderTwoColumn(
 
   const items = getItems(slideData).slice(0, 2);
 
-  const leftX = 0.75;
-  const rightX = 6.25;
-  const cardY = 2.15;
-  const cardWidth = 5.0;
-  const cardHeight = 3.6;
-
   items.forEach((item, index) => {
-    const x = index === 0 ? leftX : rightX;
-
-    slide.addShape("roundRect", {
-      x: x,
-      y: cardY,
-      w: cardWidth,
-      h: cardHeight,
-      fill: {
-        color: theme.colors.surface,
-      },
-      line: {
-        color: theme.colors.border,
-        width: theme.style.borderWidth,
-      },
-    });
-
-    slide.addShape("rect", {
-      x: x + 0.35,
-      y: cardY + 0.35,
-      w: 0.7,
-      h: 0.06,
-      fill: {
-        color: theme.colors.primary,
-      },
-      line: {
-        color: theme.colors.primary,
-        transparency: 100,
-      },
-    });
-
-    slide.addText(
-      `0${index + 1}`,
-      {
-        x: x + 4.2,
-        y: cardY + 0.28,
-        w: 0.45,
-        h: 0.3,
-        fontFace: theme.fonts.heading,
-        fontSize: 10,
-        bold: true,
-        color: theme.colors.primary,
-        align: "right",
-        margin: 0,
-      }
-    );
-
-    if (item.title) {
-      slide.addText(
-        item.title,
-        {
-          x: x + 0.35,
-          y: cardY + 0.8,
-          w: 4.3,
-          h: 0.55,
-          fontFace: theme.fonts.heading,
-          fontSize: 19,
-          bold: true,
-          color: theme.colors.text,
-          margin: 0,
-          fit: "shrink",
-        }
-      );
-    }
-
-    if (item.text) {
-      slide.addText(
-        item.text,
-        {
-          x: x + 0.35,
-          y: cardY + 1.55,
-          w: 4.25,
-          h: 1.45,
-          fontFace: theme.fonts.body,
-          fontSize: theme.sizes.body,
-          color: theme.colors.muted,
-          margin: 0.02,
-          valign: "top",
-          fit: "shrink",
-        }
-      );
-    }
-  });
-}
-/* =========================================
-   STATS
-========================================= */
-
-function renderStats(
-  slide: PptxSlide,
-  slideData: PresentationSlide,
-  theme: PresentationTheme
-) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
-
-  const items = getItems(slideData).slice(
-    0,
-    3
-  );
-
-  items.forEach((item, index) => {
-    const x = 0.75 + index * 3.9;
-
-    addCard(
-      slide,
-      theme,
-      x,
-      1.7,
-      3.55,
-      3.9
-    );
-
-    if (item.value) {
-      slide.addText(item.value, {
-        x: x + 0.3,
-        y: 2.25,
-        w: 2.9,
-        h: 0.8,
-
-        fontFace: theme.fonts.heading,
-        fontSize: theme.sizes.stat,
-        bold: true,
-
-        color: theme.colors.primary,
-
-        margin: 0,
-
-        fit: "shrink",
-      });
-    }
-
-    if (item.title) {
-      addCardTitle(
-        slide,
-        theme,
-        item.title,
-        x + 0.3,
-        3.25,
-        2.9
-      );
-    }
-
-    if (item.text) {
-      addCardText(
-        slide,
-        theme,
-        item.text,
-        x + 0.3,
-        3.85,
-        2.9,
-        1.15
-      );
-    }
-  });
-}
-
-/* =========================================
-   PROCESS
-========================================= */
-
-function renderProcess(
-  slide: PptxSlide,
-  slideData: PresentationSlide,
-  theme: PresentationTheme
-) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
-
-  const items = getItems(slideData).slice(0, 4);
-
-  const startX = 0.75;
-  const cardWidth = 2.75;
-  const cardHeight = 3.45;
-  const gap = 0.35;
-  const y = 2.15;
-
-  items.forEach((item, index) => {
-    const x =
-      startX +
-      index * (cardWidth + gap);
-
-    // Step circle
-    slide.addShape("ellipse", {
-      x: x + 0.05,
-      y: y,
-      w: 0.65,
-      h: 0.65,
-
-      fill: {
-        color: theme.colors.primary,
-      },
-
-      line: {
-        color: theme.colors.primary,
-        transparency: 100,
-      },
-    });
-
-    slide.addText(
-      String(index + 1),
-      {
-        x: x + 0.05,
-        y: y + 0.12,
-        w: 0.65,
-        h: 0.3,
-
-        fontFace: theme.fonts.heading,
-        fontSize: 14,
-        bold: true,
-
-        color: theme.colors.white,
-
-        align: "center",
-        margin: 0,
-      }
-    );
-
-    // Step title
-    if (item.title) {
-      slide.addText(
-        item.title,
-        {
-          x: x,
-          y: y + 0.9,
-          w: cardWidth,
-          h: 0.55,
-
-          fontFace: theme.fonts.heading,
-          fontSize: 17,
-          bold: true,
-
-          color: theme.colors.text,
-
-          margin: 0,
-          breakLine: false,
-          fit: "shrink",
-        }
-      );
-    }
-
-    // Step description
-    if (item.text) {
-      slide.addText(
-        item.text,
-        {
-          x: x,
-          y: y + 1.55,
-          w: cardWidth,
-          h: 1.35,
-
-          fontFace: theme.fonts.body,
-          fontSize: theme.sizes.body,
-
-          color: theme.colors.muted,
-
-          margin: 0.02,
-          valign: "top",
-          fit: "shrink",
-        }
-      );
-    }
-
-    // Connector between steps
-    if (index < items.length - 1) {
-      slide.addText(
-        "→",
-        {
-          x: x + cardWidth + 0.03,
-          y: y + 0.12,
-          w: gap - 0.05,
-          h: 0.45,
-
-          fontFace: theme.fonts.heading,
-          fontSize: 22,
-          bold: true,
-
-          color: theme.colors.primary,
-
-          align: "center",
-          margin: 0,
-        }
-      );
-    }
-  });
-}
-
-
-/* =========================================
-   COMPARISON
-========================================= */
-
-function renderComparison(
-  slide: PptxSlide,
-  slideData: PresentationSlide,
-  theme: PresentationTheme
-) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
-
-  const items = getItems(slideData).slice(
-    0,
-    2
-  );
-
-  items.forEach((item, index) => {
-    const x =
-      index === 0
-        ? 0.75
-        : 6.55;
+    const x = index === 0 ? 0.7 : 6.75;
 
     addCard(
       slide,
       theme,
       x,
       1.65,
-      5.55,
-      4.75
+      5.85,
+      4.65,
+      index === 0
     );
 
     slide.addText(
-      index === 0
-        ? "OPTION A"
-        : "OPTION B",
+      index === 0 ? "01" : "02",
       {
-        x: x + 0.3,
-        y: 1.95,
-        w: 2,
-        h: 0.25,
-
-        fontFace: theme.fonts.body,
-        fontSize: theme.sizes.small,
+        x: x + 0.35,
+        y: 1.98,
+        w: 0.65,
+        h: 0.3,
+        fontFace: theme.fonts.heading,
+        fontSize: 12,
         bold: true,
-
         color: theme.colors.primary,
-
         margin: 0,
-
-        charSpacing: 1,
       }
     );
 
-    if (item.title) {
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
       addCardTitle(
         slide,
         theme,
-        item.title,
-        x + 0.3,
-        2.45,
-        4.8
+        title,
+        x + 0.35,
+        2.55,
+        5.0,
+        20
       );
     }
 
-    if (item.text) {
+    if (text) {
       addCardText(
         slide,
         theme,
-        item.text,
-        x + 0.3,
-        3.1,
-        4.8,
-        2.2
+        text,
+        x + 0.35,
+        3.2,
+        5.0,
+        2.35,
+        13
       );
     }
   });
 }
 
-/* =========================================
+/* =========================================================
+   STATS
+========================================================= */
+
+function renderStats(
+  slide: PptxSlide,
+  slideData: PresentationSlide,
+  theme: PresentationTheme
+) {
+  addHeader(slide, theme, slideData.title);
+
+  const items = getItems(slideData).slice(0, 3);
+
+  items.forEach((item, index) => {
+    const x = 0.7 + index * 4.05;
+
+    addCard(
+      slide,
+      theme,
+      x,
+      1.7,
+      3.75,
+      4.25,
+      index === 0
+    );
+
+    slide.addText(
+      item.value || "—",
+      {
+        x: x + 0.35,
+        y: 2.2,
+        w: 3.05,
+        h: 0.85,
+        fontFace: theme.fonts.heading,
+        fontSize: theme.sizes.stat + 4,
+        bold: true,
+        color: theme.colors.primary,
+        margin: 0,
+        fit: "shrink",
+      }
+    );
+
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
+      addCardTitle(
+        slide,
+        theme,
+        title,
+        x + 0.35,
+        3.35,
+        3.0,
+        16
+      );
+    }
+
+    if (text) {
+      addCardText(
+        slide,
+        theme,
+        text,
+        x + 0.35,
+        3.95,
+        3.0,
+        1.25
+      );
+    }
+  });
+}
+
+/* =========================================================
+   PROCESS
+========================================================= */
+
+function renderProcess(
+  slide: PptxSlide,
+  slideData: PresentationSlide,
+  theme: PresentationTheme
+) {
+  addHeader(slide, theme, slideData.title);
+
+  const items = getItems(slideData).slice(0, 5);
+
+  const cardWidth = 2.25;
+  const gap = 0.2;
+
+  items.forEach((item, index) => {
+    const x = 0.55 + index * (cardWidth + gap);
+
+    addCard(
+      slide,
+      theme,
+      x,
+      1.85,
+      cardWidth,
+      4.35,
+      index === 0
+    );
+
+    slide.addText(
+      String(index + 1).padStart(2, "0"),
+      {
+        x: x + 0.28,
+        y: 2.2,
+        w: 0.7,
+        h: 0.35,
+        fontFace: theme.fonts.heading,
+        fontSize: 21,
+        bold: true,
+        color: theme.colors.primary,
+        margin: 0,
+      }
+    );
+
+    addAccentDot(
+      slide,
+      theme,
+      x + 1.62,
+      2.2,
+      0.28
+    );
+
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
+      addCardTitle(
+        slide,
+        theme,
+        title,
+        x + 0.28,
+        3.0,
+        cardWidth - 0.56,
+        15
+      );
+    }
+
+    if (text) {
+      addCardText(
+        slide,
+        theme,
+        text,
+        x + 0.28,
+        3.62,
+        cardWidth - 0.56,
+        1.8,
+        11
+      );
+    }
+
+    if (index < items.length - 1) {
+      slide.addText("→", {
+        x: x + cardWidth - 0.03,
+        y: 3.25,
+        w: gap + 0.1,
+        h: 0.4,
+        fontFace: theme.fonts.heading,
+        fontSize: 17,
+        bold: true,
+        color: theme.colors.primary,
+        align: "center",
+        margin: 0,
+      });
+    }
+  });
+}
+
+/* =========================================================
+   COMPARISON
+========================================================= */
+
+function renderComparison(
+  slide: PptxSlide,
+  slideData: PresentationSlide,
+  theme: PresentationTheme
+) {
+  addHeader(slide, theme, slideData.title);
+
+  const items = getItems(slideData).slice(0, 2);
+
+  items.forEach((item, index) => {
+    const x = index === 0 ? 0.7 : 6.75;
+
+    addCard(
+      slide,
+      theme,
+      x,
+      1.65,
+      5.85,
+      4.75,
+      index === 0
+    );
+
+    slide.addText(
+      index === 0 ? "OPTION A" : "OPTION B",
+      {
+        x: x + 0.35,
+        y: 1.98,
+        w: 2,
+        h: 0.25,
+        fontFace: theme.fonts.body,
+        fontSize: 7,
+        bold: true,
+        color: theme.colors.primary,
+        charSpacing: 1.3,
+        margin: 0,
+      }
+    );
+
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
+      addCardTitle(
+        slide,
+        theme,
+        title,
+        x + 0.35,
+        2.45,
+        5.0,
+        20
+      );
+    }
+
+    if (text) {
+      addCardText(
+        slide,
+        theme,
+        text,
+        x + 0.35,
+        3.2,
+        5.0,
+        2.3,
+        13
+      );
+    }
+  });
+}
+
+/* =========================================================
    FEATURE GRID
-========================================= */
+========================================================= */
 
 function renderFeatureGrid(
   slide: PptxSlide,
   slideData: PresentationSlide,
   theme: PresentationTheme
 ) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
+  addHeader(slide, theme, slideData.title);
 
-  const items = getItems(slideData).slice(
-    0,
-    6
-  );
+  const items = getItems(slideData).slice(0, 6);
 
   items.forEach((item, index) => {
-    const column = index % 3;
+    const col = index % 3;
     const row = Math.floor(index / 3);
 
-    const x = 0.75 + column * 3.9;
-    const y = 1.55 + row * 2.45;
+    const x = 0.7 + col * 4.05;
+    const y = 1.55 + row * 2.4;
 
     addCard(
       slide,
       theme,
       x,
       y,
-      3.55,
-      2.1
+      3.75,
+      2.05,
+      index === 0
     );
 
-    slide.addShape(
-      "ellipse",
-      {
-        x: x + 0.3,
-        y: y + 0.3,
-        w: 0.42,
-        h: 0.42,
-
-        fill: {
-          color: theme.colors.primarySoft,
-        },
-
-        line: {
-          color: theme.colors.primary,
-          transparency: 100,
-        },
-      }
+    addAccentDot(
+      slide,
+      theme,
+      x + 0.35,
+      y + 0.3,
+      0.3
     );
 
-    if (item.title) {
+    const title = itemTitle(item);
+    const text = itemText(item);
+
+    if (title) {
       addCardTitle(
         slide,
         theme,
-        item.title,
-        x + 0.3,
-        y + 0.95,
-        2.9
+        title,
+        x + 0.35,
+        y + 0.82,
+        3.05,
+        15
       );
     }
 
-    if (item.text) {
+    if (text) {
       addCardText(
         slide,
         theme,
-        item.text,
-        x + 0.3,
-        y + 1.38,
-        2.9,
-        0.55
+        text,
+        x + 0.35,
+        y + 1.3,
+        3.05,
+        0.55,
+        10.5
       );
     }
   });
 }
 
-/* =========================================
+/* =========================================================
    HIGHLIGHT
-========================================= */
+========================================================= */
 
 function renderHighlight(
   slide: PptxSlide,
   slideData: PresentationSlide,
   theme: PresentationTheme
 ) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
+  addHeader(slide, theme, slideData.title);
 
   const item = getItems(slideData)[0];
 
   addCard(
     slide,
     theme,
-    1.1,
+    0.95,
     1.7,
-    11.1,
-    4.55
+    11.45,
+    4.6,
+    true
   );
 
   slide.addText("THE BIG IDEA", {
-    x: 1.6,
-    y: 2.2,
+    x: 1.45,
+    y: 2.12,
     w: 2.5,
     h: 0.25,
-
     fontFace: theme.fonts.body,
-    fontSize: theme.sizes.small,
+    fontSize: 7,
     bold: true,
-
     color: theme.colors.primary,
-
+    charSpacing: 1.5,
     margin: 0,
-
-    charSpacing: 1.3,
   });
 
   if (item?.title) {
     slide.addText(item.title, {
-      x: 1.6,
-      y: 2.8,
-      w: 9.7,
-      h: 1.1,
-
+      x: 1.45,
+      y: 2.75,
+      w: 8.9,
+      h: 1.15,
       fontFace: theme.fonts.heading,
-      fontSize: theme.sizes.title + 4,
+      fontSize: theme.sizes.title + 3,
       bold: true,
-
       color: theme.colors.text,
-
       margin: 0,
-
       fit: "shrink",
     });
   }
 
   if (item?.text) {
     slide.addText(item.text, {
-      x: 1.6,
-      y: 4.2,
-      w: 8.8,
-      h: 0.85,
-
+      x: 1.45,
+      y: 4.15,
+      w: 8.5,
+      h: 0.9,
       fontFace: theme.fonts.body,
-      fontSize: theme.sizes.body + 1,
-
+      fontSize: 14,
       color: theme.colors.muted,
-
       margin: 0,
-
       fit: "shrink",
     });
   }
 
-  slide.addShape(
-    "ellipse",
-    {
-      x: 9.9,
-      y: 4.6,
-      w: 1.4,
-      h: 1.4,
-
-      fill: {
-        color: theme.colors.primary,
-        transparency: 80,
-      },
-
-      line: {
-        color: theme.colors.primary,
-        transparency: 100,
-      },
-    }
-  );
+  slide.addShape(pptxgen.ShapeType.ellipse, {
+    x: 10.15,
+    y: 4.45,
+    w: 1.25,
+    h: 1.25,
+    fill: {
+      color: theme.colors.primary,
+      transparency: 78,
+    },
+    line: {
+      color: theme.colors.primary,
+      transparency: 100,
+    },
+  });
 }
 
-/* =========================================
+/* =========================================================
    CONCLUSION
-========================================= */
+========================================================= */
 
 function renderConclusion(
   slide: PptxSlide,
   slideData: PresentationSlide,
   theme: PresentationTheme
 ) {
-  addHeader(
-    slide,
-    theme,
-    slideData.title
-  );
+  addHeader(slide, theme, slideData.title);
 
-  const items = getItems(slideData).slice(
-    0,
-    4
-  );
+  const items = getItems(slideData).slice(0, 4);
 
   items.forEach((item, index) => {
-    const y = 1.55 + index * 1.25;
+    const y = 1.65 + index * 1.15;
 
-    slide.addShape(
-      "ellipse",
-      {
-        x: 0.8,
-        y: y + 0.05,
-        w: 0.35,
-        h: 0.35,
-
-        fill: {
-          color: theme.colors.primary,
-        },
-
-        line: {
-          color: theme.colors.primary,
-          transparency: 100,
-        },
-      }
+    addAccentDot(
+      slide,
+      theme,
+      0.8,
+      y + 0.08,
+      0.32
     );
 
-    if (item.title) {
-      slide.addText(item.title, {
-        x: 1.4,
+    if (itemTitle(item)) {
+      slide.addText(itemTitle(item), {
+        x: 1.35,
         y,
-        w: 4.5,
+        w: 4.0,
         h: 0.35,
-
         fontFace: theme.fonts.heading,
-        fontSize: 16,
+        fontSize: 15,
         bold: true,
-
         color: theme.colors.text,
-
         margin: 0,
-
         fit: "shrink",
       });
     }
 
-    if (item.text) {
-      slide.addText(item.text, {
-        x: 5.2,
+    if (itemText(item)) {
+      slide.addText(itemText(item), {
+        x: 5.0,
         y,
-        w: 6.3,
+        w: 7.0,
         h: 0.55,
-
         fontFace: theme.fonts.body,
-        fontSize: theme.sizes.body,
-
+        fontSize: 11.5,
         color: theme.colors.muted,
-
         margin: 0,
-
         fit: "shrink",
       });
     }
+
+    if (index < items.length - 1) {
+      slide.addShape(pptxgen.ShapeType.line, {
+        x: 1.35,
+        y: y + 0.65,
+        w: 10.5,
+        h: 0,
+        line: {
+          color: theme.colors.border,
+          width: 0.6,
+          transparency: 35,
+        },
+      });
+    }
+  });
+
+  // Final visual accent
+  slide.addShape(pptxgen.ShapeType.ellipse, {
+    x: 10.85,
+    y: 5.55,
+    w: 0.75,
+    h: 0.75,
+    fill: {
+      color: theme.colors.primary,
+      transparency: 65,
+    },
+    line: {
+      color: theme.colors.primary,
+      transparency: 100,
+    },
   });
 }

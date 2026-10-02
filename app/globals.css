@@ -177,15 +177,47 @@ button {
 }
 
 .ps-btn.primary {
-  background: var(--blue);
+  min-height: 48px;
+  padding: 0 22px;
+
+  background: linear-gradient(
+    135deg,
+    #3b82f6 0%,
+    #2563eb 100%
+  );
+
   color: white;
-  border-color: var(--blue);
+  border: 1px solid rgba(96, 165, 250, 0.55);
+  border-radius: 11px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow:
+    0 10px 30px rgba(37, 99, 235, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 .ps-btn.primary:hover {
-  background: var(--blue-dark);
-}
+  background: linear-gradient(
+    135deg,
+    #4f8fff 0%,
+    #2563eb 100%
+  );
 
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 35px rgba(37, 99, 235, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+
+  filter: brightness(1.05);
+}
 .ps-btn.ghost {
   background: transparent;
   color: var(--muted);
@@ -202,6 +234,7 @@ button {
 ========================================= */
 
 .ps-hero {
+  position: relative;
   width: min(1180px, calc(100% - 48px));
   min-height: 650px;
   margin: 0 auto;
@@ -210,9 +243,34 @@ button {
   grid-template-columns: 1fr 0.9fr;
   gap: 70px;
   align-items: center;
+
+  overflow: visible;
+}
+
+/* Subtle premium glow behind the hero */
+.ps-hero::before {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  right: -120px;
+  top: 60px;
+
+  background: radial-gradient(
+    circle,
+    rgba(37, 99, 235, 0.16) 0%,
+    rgba(37, 99, 235, 0.06) 35%,
+    transparent 70%
+  );
+
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .ps-hero-copy {
+  position: relative;
+  z-index: 2;
   max-width: 650px;
 }
 
@@ -220,39 +278,50 @@ button {
   display: inline-flex;
   align-items: center;
 
-  padding: 7px 11px;
+  padding: 8px 13px;
 
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid rgba(59, 130, 246, 0.4);
   border-radius: 999px;
 
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
 
-  color: #76a9ff;
+  color: #8db8ff;
 
   font-size: 11px;
   font-weight: 700;
-
   letter-spacing: 0.12em;
   text-transform: uppercase;
+
+  box-shadow:
+    0 0 20px rgba(37, 99, 235, 0.08),
+    inset 0 0 14px rgba(37, 99, 235, 0.04);
 }
 
 .ps-hero h1 {
   margin: 20px 0 18px;
 
-  font-size: clamp(42px, 5vw, 68px);
-  line-height: 1.03;
-  letter-spacing: -0.045em;
+  font-size: clamp(44px, 5vw, 70px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
 
   color: var(--white);
 }
 
 .ps-hero h1 span {
-  color: #5b9cff;
+  background: linear-gradient(
+    135deg,
+    #8db8ff 0%,
+    #4f8fff 45%,
+    #2563eb 100%
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .ps-sub {
-  max-width: 650px;
-
+  max-width: 620px;
   margin: 0;
 
   color: var(--muted);
@@ -264,9 +333,9 @@ button {
 .ps-hero-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 
-  margin-top: 30px;
+  margin-top: 32px;
 }
 
 /* =========================================
@@ -275,12 +344,13 @@ button {
 
 .ps-hero-visual {
   position: relative;
-
   height: 470px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  perspective: 1200px;
 }
 
 .ps-slide-stack {
@@ -288,83 +358,184 @@ button {
 
   width: 430px;
   height: 300px;
+
+  transform-style: preserve-3d;
 }
 
+/* Soft glow underneath the presentation */
+.ps-slide-stack::before {
+  content: "";
+
+  position: absolute;
+  width: 360px;
+  height: 220px;
+
+  left: 35px;
+  top: 45px;
+
+  background: rgba(37, 99, 235, 0.2);
+  filter: blur(65px);
+
+  border-radius: 50%;
+}
+
+/* Actual slide */
 .ps-slide-card {
   position: absolute;
 
   width: 390px;
   height: 245px;
 
-  padding: 24px;
+  padding: 26px;
 
-  border: 1px solid rgba(159, 179, 204, 0.18);
-  border-radius: 18px;
+  border: 1px solid rgba(159, 179, 204, 0.2);
+  border-radius: 16px;
 
-  background: var(--surface);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 47, 83, 0.98),
+      rgba(8, 27, 51, 0.98)
+    );
 
   box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.02);
+    0 35px 80px rgba(0, 0, 0, 0.42),
+    0 12px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   overflow: hidden;
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* PPT-like top edge */
+.ps-slide-card::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  top: 0;
+
+  height: 4px;
+
+  background: linear-gradient(
+    90deg,
+    #2563eb,
+    #60a5fa,
+    transparent
+  );
+}
+
+/* Small presentation footer */
+.ps-slide-card::after {
+  content: "PITCHSPRINT • AI PRESENTATION";
+
+  position: absolute;
+
+  left: 26px;
+  right: 26px;
+  bottom: 16px;
+
+  padding-top: 9px;
+
+  border-top: 1px solid rgba(159, 179, 204, 0.12);
+
+  color: rgba(159, 179, 204, 0.55);
+
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }
 
 .ps-slide-card.one {
-  top: 20px;
-  left: 30px;
-  transform: rotate(-7deg);
+  top: 30px;
+  left: 35px;
+
+  transform:
+    translateZ(-80px)
+    rotate(-8deg);
+
+  opacity: 0.65;
 }
 
 .ps-slide-card.two {
-  top: 5px;
-  left: 25px;
-  transform: rotate(2deg);
+  top: 12px;
+  left: 28px;
+
+  transform:
+    translateZ(-30px)
+    rotate(3deg);
+
+  opacity: 0.85;
 }
 
 .ps-slide-card.three {
   top: 0;
   left: 10px;
-  transform: rotate(-1deg);
+
+  transform:
+    translateZ(30px)
+    rotate(-1deg);
+
   z-index: 3;
 }
 
+/* Slight interaction when hovering the visual */
+.ps-hero-visual:hover .ps-slide-card.three {
+  transform:
+    translateZ(50px)
+    rotate(-1deg)
+    translateY(-5px);
+
+  box-shadow:
+    0 45px 90px rgba(0, 0, 0, 0.48),
+    0 15px 35px rgba(37, 99, 235, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
 .ps-slide-label {
-  color: var(--blue);
+  color: #76a9ff;
 
-  font-size: 10px;
-  font-weight: 700;
-
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .ps-slide-title {
-  margin-top: 20px;
+  margin-top: 22px;
 
   color: white;
 
-  font-size: 25px;
+  font-size: 27px;
   font-weight: 800;
-
-  line-height: 1.1;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
 }
 
 .ps-slide-line {
-  width: 50px;
+  width: 54px;
   height: 4px;
 
-  margin-top: 18px;
+  margin-top: 19px;
 
   border-radius: 999px;
 
-  background: var(--blue);
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #60a5fa
+  );
 }
 
 .ps-slide-small {
-  width: 70%;
+  width: 72%;
 
-  margin-top: 15px;
+  margin-top: 16px;
 
   color: var(--muted);
 
@@ -979,7 +1150,7 @@ button {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 600px){
   .ps-nav {
     width: calc(100% - 28px);
   }
@@ -1000,41 +1171,23 @@ button {
   }
 
   .ps-slide-stack {
-    transform: scale(0.75);
-  }
-
-  .ps-process {
-    grid-template-columns: 1fr;
-  }
-
-  .ps-option-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ps-stepbar {
-    width: calc(100% - 28px);
-    gap: 8px;
-    justify-content: space-between;
-  }
-
-  .ps-step {
-    font-size: 0;
-  }
-
-  .ps-step .num {
-    font-size: 12px;
-  }
-
-  .ps-upload-box {
-    padding: 30px 18px;
-  }
-
-  .ps-page-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
+  transform: scale(0.72);
+  transform-origin: center center;
 }
+
+.ps-hero-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ps-hero-actions .ps-btn {
+  width: 100%;
+}
+
+.ps-hero-visual {
+  height: 330px;
+  margin-top: -10px;
+}}
 /* =========================================
    PRESENTATION EDITOR
 ========================================= */
